@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        typeLanguage="http://www.w3.org/2001/XMLSchema"
+        expressionLanguage="http://www.w3.org/1999/XPath"
+        targetNamespace="http://www.activiti.org/test">
+
+    <message id="firstLevelRegressionPoint" name="First Level Regression Point" />
+    <process id="firstLevelSubprocess" name="My First Level Subprocess">
+
+        <startEvent id="startEvent" name="Start Event" />
+        <userTask id="readEmail" name="Reading dossier Email"></userTask>
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="readEmail" />
+
+        <callActivity id="secondLevel" name="Second Level Subprocess" calledElement="secondLevelSubprocess">
+            <extensionElements>
+                <activiti:out source="isRecordalNeeded" target="secondLevelSubprocessResult"></activiti:out>
+            </extensionElements>
+        </callActivity>
+        <sequenceFlow id="flow2" sourceRef="readEmail" targetRef="secondLevel" />
+
+        <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway after Second Lever" />
+        <sequenceFlow id="flow3" sourceRef="secondLevel" targetRef="exclusivegateway1"></sequenceFlow>
+        <sequenceFlow sourceRef="exclusivegateway1" targetRef="success">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${secondLevelSubprocessResult}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow sourceRef="exclusivegateway1" targetRef="failure">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${!secondLevelSubprocessResult}]]></conditionExpression>
+        </sequenceFlow>
+
+        <serviceTask id="success" name="Processing success"
+                     activiti:expression="${dossierService.processSuccess(execution)}">
+        </serviceTask>
+        <sequenceFlow sourceRef="success" targetRef="endEvent" />
+
+        <userTask id="failure" name="Telephone call"></userTask>
+        <sequenceFlow sourceRef="failure" targetRef="endEvent" />
+        <endEvent id="endEvent" />
+
+        <startEvent id="regressionPointStartEvent" name="Regression Point Start">
+            <messageEventDefinition messageRef="firstLevelRegressionPoint"></messageEventDefinition>
+        </startEvent>
+        <sequenceFlow sourceRef="regressionPointStartEvent" targetRef="exclusivegateway1" />
+        <association id="association" sourceRef="textannotation" targetRef="regressionPointStartEvent"></association>
+        <textAnnotation id="textannotation">
+            <text>Migration point after Second Level Process</text>
+        </textAnnotation>
+    </process>
+
+</definitions>

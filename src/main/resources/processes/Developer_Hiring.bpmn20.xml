@@ -1,0 +1,231 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/processdef" xmlns:modeler="http://activiti.com/modeler" modeler:version="1.0en" modeler:exportDateTime="20150216104339475" modeler:modelId="933057" modeler:modelVersion="3" modeler:modelLastUpdated="1424083415708">
+    <signal id="cancelApplication" name="cancelApplication"/>
+    <process id="hireProcess" name="Developer Hiring" isExecutable="true">
+        <startEvent id="startEvent1"/>
+        <serviceTask id="storeResume" name="Store resume" activiti:expression="${resumeService.storeResume()}"/>
+        <sequenceFlow id="flow1" sourceRef="startEvent1" targetRef="storeResume"/>
+        <userTask id="telephoneInterview" name="Telephone interview" activiti:candidateGroups="dev-managers">
+            <documentation>Conduct a telephone interview with ${applicantName}. Phone number = ${phoneNumber}</documentation>
+        </userTask>
+        <sequenceFlow id="flow2" sourceRef="storeResume" targetRef="telephoneInterview"/>
+        <serviceTask id="rejectionEmail" name="Send rejection email" activiti:type="mail">
+            <extensionElements>
+                <activiti:field name="to">
+                    <activiti:expression>${email}</activiti:expression>
+                </activiti:field>
+                <activiti:field name="from">
+                    <activiti:expression>test@activiti.org</activiti:expression>
+                </activiti:field>
+                <activiti:field name="subject">
+                    <activiti:string><![CDATA[Your application has been rejected]]></activiti:string>
+                </activiti:field>
+                <activiti:field name="html">
+                    <activiti:expression>Dear ${applicantName},
+
+                        We're sorry to inform you that your recent application has been rejected. We have stored your information in our data systems and will contact you if in the future a potential matching application is posted on our website.
+
+                        Regards,
+                        My Corp</activiti:expression>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+        <exclusiveGateway id="exclusiveGatewayInterview"/>
+        <sequenceFlow id="flow3" sourceRef="exclusiveGatewayInterview" targetRef="rejectionEmail">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${telephoneInterviewOutcome == false}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="sid-B468226B-DB2E-421E-B04B-5FF1622F3E78" sourceRef="telephoneInterview" targetRef="exclusiveGatewayInterview"/>
+        <endEvent id="endEventInterview"/>
+        <sequenceFlow id="flow4" sourceRef="rejectionEmail" targetRef="endEventInterview"/>
+
+        <subProcess id="subprocess1" name="subProcess">
+            <startEvent id="startEventSubprocess"/>
+            <parallelGateway id="parallelGatewaySubprocess"/>
+            <userTask id="userTaskTechInterview" name="Tech interview" activiti:candidateGroups="dev-management"/>
+            <userTask id="userTaskFinancialNeg" name="Financial negotiation" activiti:candidateGroups="finance"/>
+            <parallelGateway id="parallelGatewayUnion"/>
+            <endEvent id="endEventSubprocess"/>
+            <sequenceFlow id="flowSubprocess1" sourceRef="startEventSubprocess" targetRef="parallelGatewaySubprocess"/>
+            <sequenceFlow id="flowSubprocess2" sourceRef="parallelGatewaySubprocess" targetRef="userTaskTechInterview"/>
+            <sequenceFlow id="flowSubprocess3" sourceRef="parallelGatewaySubprocess" targetRef="userTaskFinancialNeg"/>
+            <sequenceFlow id="flowSubprocess4" sourceRef="userTaskTechInterview" targetRef="parallelGatewayUnion"/>
+            <sequenceFlow id="flowSubprocess5" sourceRef="userTaskFinancialNeg" targetRef="parallelGatewayUnion"/>
+            <sequenceFlow id="flowSubprocess6" sourceRef="parallelGatewayUnion" targetRef="endEventSubprocess"/>
+        </subProcess>
+
+        <sequenceFlow id="flow5" sourceRef="exclusiveGatewayInterview" targetRef="subprocess1">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${telephoneInterviewOutcome == true}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow6" sourceRef="subprocess1" targetRef="exclusiveGatewaySubprocess"/>
+        <exclusiveGateway id="exclusiveGatewaySubprocess" default="flow7"/>
+        <endEvent id="endEventRejected" name="rejected"/>
+        <sequenceFlow id="flow7" sourceRef="exclusiveGatewaySubprocess" targetRef="endEventRejected"/>
+        <sequenceFlow id="flow8" sourceRef="exclusiveGatewaySubprocess" targetRef="welcomeMail">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${techOk && financialOk}]]></conditionExpression>
+        </sequenceFlow>
+        <serviceTask id="welcomeMail" name="Send welcome mail" activiti:type="mail">
+            <extensionElements>
+                <activiti:field name="to">
+                    <activiti:expression>${email}</activiti:expression>
+                </activiti:field>
+                <activiti:field name="from">
+                    <activiti:expression>test@activiti.org</activiti:expression>
+                </activiti:field>
+                <activiti:field name="subject">
+                    <activiti:string><![CDATA[Your application has been accepted!]]></activiti:string>
+                </activiti:field>
+                <activiti:field name="html">
+                    <activiti:expression>Dear ${applicantName},
+
+                        We're happy to inform you that your recent application has been accepted.  We will contact you soon for more information.
+
+                        Regards,
+                        My Corp</activiti:expression>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+        <endEvent id="endEventAccepted" name="accepted"/>
+        <sequenceFlow id="flow9" sourceRef="welcomeMail" targetRef="endEventAccepted"/>
+        <boundaryEvent id="boundaryEventAppCancels" name="applicant cancels" attachedToRef="subprocess1" cancelActivity="true">
+            <signalEventDefinition signalRef="cancelApplication"/>
+        </boundaryEvent>
+        <sequenceFlow id="flow10" sourceRef="boundaryEventAppCancels" targetRef="endEventApplicationCancels"/>
+        <endEvent id="endEventApplicationCancels"/>
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_hireProcess">
+        <bpmndi:BPMNPlane bpmnElement="hireProcess" id="BPMNPlane_hireProcess">
+            <bpmndi:BPMNShape bpmnElement="telephoneInterview" id="BPMNShape_telephoneInterview">
+                <omgdc:Bounds height="80.0" width="100.0" x="320.0" y="185.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="exclusiveGatewayInterview" id="BPMNShape_exclusiveGatewayInterview">
+                <omgdc:Bounds height="40.0" width="40.0" x="465.0" y="205.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="endEventInterview" id="BPMNShape_endEventInterview">
+                <omgdc:Bounds height="28.0" width="28.0" x="690.0" y="56.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="rejectionEmail" id="BPMNShape_rejectionEmail">
+                <omgdc:Bounds height="80.0" width="100.0" x="525.0" y="30.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="subprocess1" id="BPMNShape_subprocess1">
+                <omgdc:Bounds height="280.0" width="492.0" x="525.0" y="135.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="startEventSubprocess" id="BPMNShape_startEventSubprocess">
+                <omgdc:Bounds height="30.0" width="30.0" x="540.0" y="256.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="parallelGatewaySubprocess" id="BPMNShape_parallelGatewaySubprocess">
+                <omgdc:Bounds height="40.0" width="40.0" x="615.0" y="251.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="userTaskTechInterview" id="BPMNShape_userTaskTechInterview">
+                <omgdc:Bounds height="80.0" width="100.0" x="720.0" y="165.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="userTaskFinancialNeg" id="BPMNShape_userTaskFinancialNeg">
+                <omgdc:Bounds height="80.0" width="100.0" x="720.0" y="300.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="parallelGatewayUnion" id="BPMNShape_parallelGatewayUnion">
+                <omgdc:Bounds height="40.0" width="40.0" x="865.0" y="254.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="endEventSubprocess" id="BPMNShape_endEventSubprocess">
+                <omgdc:Bounds height="28.0" width="28.0" x="950.0" y="260.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="endEventApplicationCancels" id="BPMNShape_endEventApplicationCancels">
+                <omgdc:Bounds height="28.0" width="28.0" x="975.0" y="450.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="storeResume" id="BPMNShape_storeResume">
+                <omgdc:Bounds height="80.0" width="100.0" x="175.0" y="185.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="startEvent1" id="BPMNShape_startEvent1">
+                <omgdc:Bounds height="30.0" width="30.0" x="105.0" y="210.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="boundaryEventAppCancels" id="BPMNShape_boundaryEventAppCancels">
+                <omgdc:Bounds height="30.0" width="30.0" x="920.8135233868946" y="400.4388675374264"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="exclusiveGatewaySubprocess" id="BPMNShape_exclusiveGatewaySubprocess">
+                <omgdc:Bounds height="40.0" width="40.0" x="1062.0" y="255.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="endEventRejected" id="BPMNShape_endEventRejected">
+                <omgdc:Bounds height="28.0" width="28.0" x="1180.0" y="261.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="welcomeMail" id="BPMNShape_welcomeMail">
+                <omgdc:Bounds height="80.0" width="100.0" x="1035.0" y="105.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="endEventAccepted" id="BPMNShape_endEventAccepted">
+                <omgdc:Bounds height="28.0" width="28.0" x="1180.0" y="131.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+                <omgdi:waypoint x="1082.875939849624" y="255.87593984962405"/>
+                <omgdi:waypoint x="1084.233716475096" y="185.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flowSubprocess4" id="BPMNEdge_flowSubprocess4">
+                <omgdi:waypoint x="820.0" y="205.0"/>
+                <omgdi:waypoint x="885.5" y="205.0"/>
+                <omgdi:waypoint x="885.5" y="254.5"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flowSubprocess3" id="BPMNEdge_flowSubprocess3">
+                <omgdi:waypoint x="635.5" y="290.5"/>
+                <omgdi:waypoint x="635.5" y="340.0"/>
+                <omgdi:waypoint x="720.0" y="340.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flowSubprocess1" id="BPMNEdge_flowSubprocess1">
+                <omgdi:waypoint x="569.9997106676825" y="271.0931659047682"/>
+                <omgdi:waypoint x="615.375" y="271.375"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flowSubprocess2" id="BPMNEdge_flowSubprocess2">
+                <omgdi:waypoint x="635.5" y="251.5"/>
+                <omgdi:waypoint x="635.5" y="205.0"/>
+                <omgdi:waypoint x="720.0" y="205.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+                <omgdi:waypoint x="1135.0" y="145.0"/>
+                <omgdi:waypoint x="1180.0" y="145.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+                <omgdi:waypoint x="625.0" y="70.0"/>
+                <omgdi:waypoint x="690.0" y="70.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+                <omgdi:waypoint x="275.0" y="225.0"/>
+                <omgdi:waypoint x="320.0" y="225.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+                <omgdi:waypoint x="935.8135233868946" y="430.4388675374264"/>
+                <omgdi:waypoint x="935.8135233868946" y="464.0"/>
+                <omgdi:waypoint x="975.0" y="464.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flowSubprocess6" id="BPMNEdge_flowSubprocess6">
+                <omgdi:waypoint x="904.6217948717949" y="274.37820512820514"/>
+                <omgdi:waypoint x="950.0002839785394" y="274.0891701657418"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+                <omgdi:waypoint x="1101.5855855855855" y="275.4144144144144"/>
+                <omgdi:waypoint x="1180.0001407608122" y="275.0627796378439"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flowSubprocess5" id="BPMNEdge_flowSubprocess5">
+                <omgdi:waypoint x="820.0" y="340.0"/>
+                <omgdi:waypoint x="885.0" y="340.0"/>
+                <omgdi:waypoint x="885.0" y="294.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+                <omgdi:waypoint x="485.5" y="244.5"/>
+                <omgdi:waypoint x="485.5" y="275.0"/>
+                <omgdi:waypoint x="525.0" y="275.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+                <omgdi:waypoint x="135.0" y="225.0"/>
+                <omgdi:waypoint x="175.0" y="225.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+                <omgdi:waypoint x="485.5" y="205.5"/>
+                <omgdi:waypoint x="485.5" y="70.0"/>
+                <omgdi:waypoint x="525.0" y="70.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+                <omgdi:waypoint x="1017.0" y="275.3948635634029"/>
+                <omgdi:waypoint x="1062.467845659164" y="275.46784565916397"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="sid-B468226B-DB2E-421E-B04B-5FF1622F3E78" id="BPMNEdge_sid-B468226B-DB2E-421E-B04B-5FF1622F3E78">
+                <omgdi:waypoint x="420.0" y="225.2164502164502"/>
+                <omgdi:waypoint x="465.4130434782609" y="225.41304347826087"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>

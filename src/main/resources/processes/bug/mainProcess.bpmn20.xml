@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        typeLanguage="http://www.w3.org/2001/XMLSchema"
+        expressionLanguage="http://www.w3.org/1999/XPath"
+        targetNamespace="http://www.activiti.org/test">
+
+    <message id="mainProcessRegressionPoint" name="Main Process Regression Point" />
+    <process id="mainProcess" name="My Main Process">
+
+        <startEvent id="startEvent" />
+        <userTask id="startLaptop" name="Starting Laptop"></userTask>
+        <sequenceFlow sourceRef="startEvent" targetRef="startLaptop"></sequenceFlow>
+
+        <callActivity id="callActiviti" name="To the First Level" calledElement="firstLevelSubprocess">
+            <extensionElements>
+                <activiti:out source="inFirstLevel" target="firstLevelSubprocessResult"></activiti:out>
+            </extensionElements>
+        </callActivity>
+        <sequenceFlow sourceRef="startLaptop" targetRef="callActiviti" />
+        <sequenceFlow sourceRef="callActiviti" targetRef="exclusiveGateway" />
+
+        <exclusiveGateway id="exclusiveGateway" />
+        <sequenceFlow sourceRef="exclusiveGateway" targetRef="success" >
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${firstLevelSubprocessResult == 'spring'}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow sourceRef="exclusiveGateway" targetRef="failure" >
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${firstLevelSubprocessResult == 'webServices'}]]></conditionExpression>
+        </sequenceFlow>
+
+        <userTask id="success" name="Final success" />
+        <sequenceFlow sourceRef="success" targetRef="endEvent" />
+
+        <userTask id="failure" name="Urgent Meeting"></userTask>
+        <sequenceFlow sourceRef="failure" targetRef="endEvent" />
+        <endEvent id="endEvent" />
+
+        <startEvent id="regressionPointStartEvent" name="Regression Point Start">
+            <messageEventDefinition messageRef="mainProcessRegressionPoint"></messageEventDefinition>
+        </startEvent>
+        <sequenceFlow sourceRef="regressionPointStartEvent" targetRef="exclusiveGateway" />
+        <association id="association" sourceRef="textannotation" targetRef="regressionPointStartEvent"></association>
+        <textAnnotation id="textannotation">
+            <text>Migration point after First Level Process</text>
+        </textAnnotation>
+
+    </process>
+
+</definitions>

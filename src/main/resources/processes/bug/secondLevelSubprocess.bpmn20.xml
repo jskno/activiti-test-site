@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        typeLanguage="http://www.w3.org/2001/XMLSchema"
+        expressionLanguage="http://www.w3.org/1999/XPath"
+        targetNamespace="http://www.activiti.org/test">
+
+    <message id="endSecondLevelSubprocess" name="endSecondLevelSubprocess"></message>
+    <message id="secondLevelRegressionPoint" name="Second Level Regression Point"></message>
+    <process id="secondLevelSubprocess" name="My Second Level Subprocess">
+        <startEvent id="mainStartEvent" />
+        <sequenceFlow id="flow1" sourceRef="mainStartEvent" targetRef="examineDossier" />
+        <userTask id="examineDossier" name="First examination" activiti:candidateGroups="dev-managers">
+            <documentation>Conduct a quick examination in ${days}</documentation>
+        </userTask>
+        <sequenceFlow sourceRef="examineDossier" targetRef="validateDataService" />
+        <serviceTask id="validateDataService" name="Validation"
+                     activiti:expression="${dossierService.validate(execution)}">
+        </serviceTask>
+        <sequenceFlow sourceRef="validateDataService" targetRef="userTaskWaiting" />
+        <userTask id="userTaskWaiting" name="Waiting for user or message"></userTask>
+        <sequenceFlow sourceRef="userTaskWaiting" targetRef="mainEndEvent" />
+        <endEvent id="mainEndEvent" />
+
+        <boundaryEvent id="endThroughMessage" name="Message" attachedToRef="userTaskWaiting"
+                       cancelActivity="true">
+            <messageEventDefinition messageRef="endSecondLevelSubprocess"></messageEventDefinition>
+        </boundaryEvent>
+        <sequenceFlow sourceRef="endThroughMessage" targetRef="mainEndEvent" />
+
+    </process>
+
+</definitions>
