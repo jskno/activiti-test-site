@@ -12,7 +12,7 @@
     <sequenceFlow id="flow1.2" sourceRef="inclusiveGateway1start" targetRef="exclusivegateway1"></sequenceFlow>
 
     <serviceTask id="modifierService" name="Migration task modifier service"
-                 activiti:class="eu.euipo.microservice.task.delegate.MigrationTaskModifierDelegate">
+                 activiti:class="com.solutions.delegate.MigrationTaskModifierDelegate">
     </serviceTask>
 
     <exclusiveGateway id="exclusivegateway1" name="Task type">
@@ -39,7 +39,7 @@
       <extensionElements>
         <activiti:in source="dossierCreator" target="dossierCreator"></activiti:in>
         <activiti:executionListener event="start"
-             class="eu.euipo.microservice.workflow.listener.MigrationExecutionListener">
+             class="com.solutions.delegate.MigrationExecutionListener">
         </activiti:executionListener>
       </extensionElements>
     </callActivity>
@@ -54,7 +54,8 @@
     <inclusiveGateway id="inclusiveGateway1join"></inclusiveGateway>
     <sequenceFlow id="flow2.1" sourceRef="exclusivegateway1join" targetRef="inclusiveGateway1join"></sequenceFlow>
     <sequenceFlow id="flow2.2" sourceRef="modifierService" targetRef="inclusiveGateway1join"></sequenceFlow>
-    <serviceTask id="jumpTaskService" name="Jump Task" activiti:class="eu.euipo.microservice.task.delegate.MigrationJumpTaskDelegate"></serviceTask>
+    <serviceTask id="jumpTaskService" name="Jump Task" activiti:class="com.solutions.delegate.MigrationJumpTaskDelegate">
+    </serviceTask>
     <sequenceFlow id="flow3" sourceRef="inclusiveGateway1join" targetRef="jumpTaskService"></sequenceFlow>
     <sequenceFlow id="flow3.1" sourceRef="jumpTaskService" targetRef="exclusivegateway2"></sequenceFlow>
     <exclusiveGateway id="exclusivegateway2" name="Task type"></exclusiveGateway>

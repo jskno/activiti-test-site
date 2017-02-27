@@ -51,9 +51,15 @@ public class MigrationJumpTaskDelegate implements JavaDelegate {
 			varMap.put(VariableMigration.MIGRATION_PROCESS_INSTANCE_ID.getValue(), execution.getProcessInstanceId());
 		}
 
-//		varMap.put("interpartes_check_if_recordal_needed_result", Boolean.FALSE);
 		List<ProcessInstance> instanceList0 = getProcessEngine().getRuntimeService().createProcessInstanceQuery().list();
-		getProcessEngine().getRuntimeService().startProcessInstanceByMessage(execution.getVariable(MigrationVariable.MIGRATION_POINT_AFTER_COMPLETE.getValue()).toString(), varMap);
+		String trigger = (String) varMap.get(MigrationVariable.MIGRATION_POINT_TRIGGER_BY);
+		if(trigger.equals("key")) {
+			getProcessEngine().getRuntimeService().startProcessInstanceByKey(
+					execution.getVariable(MigrationVariable.MIGRATION_POINT_AFTER_COMPLETE.getValue()).toString(), varMap);
+		} else if(trigger.equals("message")) {
+			getProcessEngine().getRuntimeService().startProcessInstanceByMessage(
+					execution.getVariable(MigrationVariable.MIGRATION_POINT_AFTER_COMPLETE.getValue()).toString(), varMap);
+		}
 		List<ProcessInstance> instanceList1 = getProcessEngine().getRuntimeService().createProcessInstanceQuery().list();
 	}
 	

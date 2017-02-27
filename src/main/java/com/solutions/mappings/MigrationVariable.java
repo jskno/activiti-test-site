@@ -20,7 +20,7 @@ public enum MigrationVariable {
 	MIGRATION_TIME_LIMIT("migrationTimelimit"),
 	MIGRATION_REGRESSION_STACK("migrationRegressionStack"),
 	MIGRATION_DEADLINE("migrationDeadline"),
-	MIGRATION_POINT_TRIGGER("migrationPointTrigger");
+	MIGRATION_POINT_TRIGGER_BY("migrationPointTrigger");
 	
 	//@formatter:on
 
