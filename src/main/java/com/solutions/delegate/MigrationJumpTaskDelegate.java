@@ -52,7 +52,7 @@ public class MigrationJumpTaskDelegate implements JavaDelegate {
 		}
 
 		List<ProcessInstance> instanceList0 = getProcessEngine().getRuntimeService().createProcessInstanceQuery().list();
-		String trigger = (String) varMap.get(MigrationVariable.MIGRATION_POINT_TRIGGER_BY);
+		String trigger = (String) varMap.get(MigrationVariable.MIGRATION_POINT_TRIGGER_BY.getValue());
 		if(trigger.equals("key")) {
 			getProcessEngine().getRuntimeService().startProcessInstanceByKey(
 					execution.getVariable(MigrationVariable.MIGRATION_POINT_AFTER_COMPLETE.getValue()).toString(), varMap);

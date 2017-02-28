@@ -112,6 +112,18 @@ public class SecondLevelRegressionPointTest {
 
         tasks = taskService.createTaskQuery().list();
         Assert.assertEquals("First examination", tasks.get(0).getName());
+        taskService.complete(tasks.get(0).getId());
+
+        tasks = taskService.createTaskQuery().list();
+        Assert.assertEquals("Waiting for user or message", tasks.get(0).getName());
+        runtimeService.messageEventReceived(tasks.get(0).getProcessInstanceId(), "endSecondLevelSubprocess");
+
+        tasks = taskService.createTaskQuery().list();
+        Assert.assertEquals("Telephone call", tasks.get(0).getName());
+        taskService.complete(tasks.get(0).getId());
+
+        tasks = taskService.createTaskQuery().list();
+        Assert.assertEquals(2, tasks.size());
 
         runtimeService.deleteProcessInstance(tasks.get(0).getProcessInstanceId(), "Test ended");
 

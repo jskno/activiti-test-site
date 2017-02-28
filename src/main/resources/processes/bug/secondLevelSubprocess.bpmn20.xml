@@ -21,7 +21,7 @@
         </userTask>
         <sequenceFlow sourceRef="examineDossier" targetRef="validateDataService" />
         <serviceTask id="validateDataService" name="Validation"
-                     activiti:expression="${dossierService.validate(execution)}">
+                     activiti:expression="${resumeService.validate(execution)}">
         </serviceTask>
         <sequenceFlow sourceRef="validateDataService" targetRef="userTaskWaiting" />
         <userTask id="userTaskWaiting" name="Waiting for user or message"></userTask>
