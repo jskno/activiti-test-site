@@ -20,7 +20,7 @@
 
         <callActivity id="secondLevel" name="Second Level Subprocess" calledElement="secondLevelSubprocess">
             <extensionElements>
-                <activiti:out source="isRecordalNeeded" target="secondLevelSubprocessResult"></activiti:out>
+                <activiti:out source="weeks" target="secondLevelSubprocessResult"></activiti:out>
             </extensionElements>
         </callActivity>
         <sequenceFlow id="flow2" sourceRef="readEmail" targetRef="secondLevel" />
@@ -29,11 +29,11 @@
         <sequenceFlow id="flow3" sourceRef="secondLevel" targetRef="exclusivegateway1"></sequenceFlow>
         <sequenceFlow sourceRef="exclusivegateway1" targetRef="success">
             <conditionExpression xsi:type="tFormalExpression">
-                <![CDATA[${secondLevelSubprocessResult}]]></conditionExpression>
+                <![CDATA[${secondLevelSubprocessResult == 'OneWeek'}]]></conditionExpression>
         </sequenceFlow>
         <sequenceFlow sourceRef="exclusivegateway1" targetRef="failure">
             <conditionExpression xsi:type="tFormalExpression">
-                <![CDATA[${!secondLevelSubprocessResult}]]></conditionExpression>
+                <![CDATA[${secondLevelSubprocessResult == 'TwoWeeks'}]]></conditionExpression>
         </sequenceFlow>
 
         <serviceTask id="success" name="Processing success"

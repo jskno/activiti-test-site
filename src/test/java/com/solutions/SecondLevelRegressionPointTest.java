@@ -92,7 +92,7 @@ public class SecondLevelRegressionPointTest {
         startVars.put(MigrationVariable.MIGRATION_REGRESSION_STACK.getValue(),
                 "firstLevelRegressionPoint, mainProcessRegressionPoint");
 
-        startVars.put("days", 20);
+        startVars.put("days", "14");
 
         Deployment deployment = repositoryService.createDeployment()
                 .addClasspathResource(SECOND_LEVEL_PROCESS)
@@ -118,10 +118,13 @@ public class SecondLevelRegressionPointTest {
 
         tasks = taskService.createTaskQuery().list();
         Assert.assertEquals("Waiting for user or message", tasks.get(0).getName());
+        ProcessInstance secondLevelInstance = runtimeService
+                .createProcessInstanceQuery().processInstanceId(
+                        tasks.get(0).getProcessInstanceId()).singleResult();
         Execution msgExec = runtimeService.createExecutionQuery()
-                .processInstanceId(processInstance.getProcessInstanceId())
+                .processInstanceId(secondLevelInstance.getProcessInstanceId())
                 .messageEventSubscriptionName("endSecondLevelSubprocess").singleResult();
-        runtimeService.messageEventReceived(msgExec.getProcessInstanceId(), "endSecondLevelSubprocess");
+        runtimeService.messageEventReceived(secondLevelInstance.getId(), "endSecondLevelSubprocess");
 
         // FirstLevelSubprocess
         tasks = taskService.createTaskQuery().list();
