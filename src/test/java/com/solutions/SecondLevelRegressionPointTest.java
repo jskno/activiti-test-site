@@ -7,6 +7,7 @@ import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.repository.Deployment;
+import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.junit.Assert;
@@ -102,6 +103,7 @@ public class SecondLevelRegressionPointTest {
         // Arrange
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PROCESS_KEY, startVars);
 
+        // SecondLevelSubprocess
         List<Task> tasks = taskService.createTaskQuery().list();
         Assert.assertEquals("User Task 3-1", tasks.get(0).getName());
         taskService.complete(tasks.get(0).getId());
@@ -116,18 +118,26 @@ public class SecondLevelRegressionPointTest {
 
         tasks = taskService.createTaskQuery().list();
         Assert.assertEquals("Waiting for user or message", tasks.get(0).getName());
-        runtimeService.messageEventReceived(tasks.get(0).getProcessInstanceId(), "endSecondLevelSubprocess");
+        Execution msgExec = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstance.getProcessInstanceId())
+                .messageEventSubscriptionName("endSecondLevelSubprocess").singleResult();
+        runtimeService.messageEventReceived(msgExec.getProcessInstanceId(), "endSecondLevelSubprocess");
 
+        // FirstLevelSubprocess
         tasks = taskService.createTaskQuery().list();
         Assert.assertEquals("Telephone call", tasks.get(0).getName());
         taskService.complete(tasks.get(0).getId());
 
+        // MainProcess
         tasks = taskService.createTaskQuery().list();
         Assert.assertEquals(2, tasks.size());
+        taskService.complete(tasks.get(0).getId());
+        taskService.complete(tasks.get(0).getId());
 
-        runtimeService.deleteProcessInstance(tasks.get(0).getProcessInstanceId(), "Test ended");
+        List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().list();
 
         // Verify no task running
+        Assert.assertEquals(0, processInstances.size());
         Assert.assertEquals("Unexpected task running after test", 0, taskService.createTaskQuery().count());
 
 

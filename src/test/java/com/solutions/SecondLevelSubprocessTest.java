@@ -102,6 +102,7 @@ public class SecondLevelSubprocessTest {
                 .singleResult();
         Assert.assertEquals("Waiting for user or message", task.getName());
 
+        // TODO Find out why I have to use the migrationProcess processInstance Id
         Execution msgExec = runtimeService.createExecutionQuery()
                 .processInstanceId(processInstance.getProcessInstanceId())
                 .messageEventSubscriptionName("endSecondLevelSubprocess").singleResult();
